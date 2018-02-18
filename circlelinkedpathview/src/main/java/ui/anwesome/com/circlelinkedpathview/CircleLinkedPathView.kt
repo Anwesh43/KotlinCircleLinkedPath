@@ -6,7 +6,7 @@ package ui.anwesome.com.circlelinkedpathview
 import android.content.*
 import android.view.*
 import android.graphics.*
-class CircleLinkedPathView(ctx:Context):View(ctx) {
+class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     override fun onDraw(canvas:Canvas) {
 
@@ -46,13 +46,14 @@ class CircleLinkedPathView(ctx:Context):View(ctx) {
     }
     data class State(var prevScale : Float = 0f,var j : Int = 0, var jDir : Int = 1, var dir : Float = 0f) {
         var scales : Array<Float> = arrayOf(0f, 0f)
-        fun update(stopcb : (Float) -> Unit) {
+        fun update(stopcb : () -> Unit) {
             scales[j] += dir * 0.1f
             if(Math.abs(scales[j] - prevScale) > 1) {
                 scales[j] = prevScale + dir
                 if(j == scales.size) {
                     j = 0
                     dir = 0f
+                    stopcb()
                 }
             }
         }
@@ -72,7 +73,7 @@ class CircleLinkedPathView(ctx:Context):View(ctx) {
         fun addNeighbor(circleNode: CircleNode) {
             neighbor = circleNode
         }
-        fun draw(canvas:Canvas, paint:Paint, var curr:Boolean) {
+        fun draw(canvas:Canvas, paint:Paint, curr:Boolean) {
             val scale1 = state.scales[0]
             val scale2 = state.scales[1]
             paint.style = Paint.Style.STROKE
@@ -89,11 +90,60 @@ class CircleLinkedPathView(ctx:Context):View(ctx) {
                 canvas.drawCircle(x1, y1, r/15*scale2, paint)
             }
         }
-        fun update(stopcb: (Float) -> Unit) {
-            state.update(stopcb)
+        fun update(stopcb: (Int) -> Unit) {
+            state.update({
+                stopcb(i)
+            })
         }
         fun startUpdating(startcb : () -> Unit) {
             state.startUpdating(startcb)
+        }
+    }
+    data class LinkedCirclePath(var w:Float, var h:Float,var n:Int) {
+        val deg = 360f/n
+        val r = Math.min(w,h)/3
+        val root: CircleNode = CircleNode(0, deg , Math.min(w,h)/3)
+        var curr:CircleNode? = root
+        init {
+            var i = 1
+            var node:CircleNode? = curr
+            while(i != n) {
+                node?.addNeighbor(CircleNode(i, deg, r))
+                node = node?.neighbor
+                i++
+            }
+            node?.neighbor = curr
+        }
+        fun draw(canvas:Canvas, paint:Paint) {
+            var node:CircleNode? = root
+            while(true) {
+                node?.draw(canvas, paint, node.i == curr?.i?:0)
+                node = node?.neighbor
+                if(node?.i?:0 == 0) {
+                    break
+                }
+            }
+        }
+        fun update(stopcb: () -> Unit, listenerCb: (Int) -> Unit) {
+            curr?.update { it ->
+                curr = curr?.neighbor
+                listenerCb(it)
+                if(curr?.i?:0 == 0) {
+                    stopcb()
+                }
+                else {
+                    startUpdating {
+
+                    }
+                }
+            }
+        }
+        fun startUpdating(startcb: () -> Unit) {
+            curr?.startUpdating {
+                if(curr?.i?:0 == 0) {
+                    startcb()
+                }
+            }
         }
     }
 }
