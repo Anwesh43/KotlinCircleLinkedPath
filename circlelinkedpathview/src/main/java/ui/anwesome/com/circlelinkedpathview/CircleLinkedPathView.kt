@@ -6,6 +6,8 @@ package ui.anwesome.com.circlelinkedpathview
 import android.content.*
 import android.view.*
 import android.graphics.*
+import android.util.Log
+
 class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     override fun onDraw(canvas:Canvas) {
@@ -143,6 +145,37 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                 if(curr?.i?:0 == 0) {
                     startcb()
                 }
+            }
+        }
+    }
+    class Renderer(var view: CircleLinkedPathView, var time: Int = 0) {
+        val animator:Animator = Animator(view)
+        var circleLinkedPath: LinkedCirclePath ?= null
+        fun render(canvas: Canvas, paint: Paint) {
+            if(time == 0) {
+                val w = canvas.width.toFloat()
+                val h = canvas.height.toFloat()
+                if(view.n > 1) {
+                    circleLinkedPath = LinkedCirclePath(w, h, view.n)
+                }
+                paint.color = Color.parseColor("#3498db")
+                paint.strokeWidth = Math.min(w,h)/30
+                paint.strokeCap = Paint.Cap.ROUND
+            }
+            canvas.drawColor(Color.parseColor("#212121"))
+            circleLinkedPath?.draw(canvas, paint)
+            time++
+            animator.animate {
+                circleLinkedPath?.update({
+                    animator.stop()
+                }) { it ->
+                    Log.d("from","$it to $it+1")
+                }
+            }
+        }
+        fun handleTap() {
+            circleLinkedPath?.startUpdating {
+                animator.stop()
             }
         }
     }
