@@ -33,6 +33,7 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
         fun stop() {
             if(animated) {
                 animated = false
+                view.invalidate()
             }
         }
         fun animate(updatecb: () -> Unit) {
@@ -54,6 +55,7 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
             scales[j] += dir * 0.1f
             if(Math.abs(scales[j] - prevScale) > 1) {
                 scales[j] = prevScale + dir
+                j += jDir
                 if(j == scales.size) {
                     j = 0
                     dir = 0f
@@ -81,17 +83,17 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
             val scale1 = state.scales[0]
             val scale2 = state.scales[1]
             paint.style = Paint.Style.STROKE
-            canvas.drawCircle(x, y, r/15, paint)
+            canvas.drawCircle(x, y, r/10, paint)
             if(curr) {
                 paint.style = Paint.Style.FILL
-                canvas.drawCircle(x, y, (r / 15) * (1 - scale1), paint)
+                canvas.drawCircle(x, y, (r / 10) * (1 - scale1), paint)
                 val x1 = neighbor?.x ?: 0f
-                val y1 = neighbor?.x ?: 0f
+                val y1 = neighbor?.y ?: 0f
                 val updatePoints: (Float) -> PointF = { scale -> PointF(x + (x1 - x)*scale, y +(y1 - y)*scale) }
                 val point1 = updatePoints(scale1)
                 val point2 = updatePoints(scale2)
                 canvas.drawLine(point2.x , point2.y ,point1.x, point1.y, paint)
-                canvas.drawCircle(x1, y1, r/15*scale2, paint)
+                canvas.drawCircle(x1, y1, (r/10) * scale2, paint)
             }
         }
         fun update(stopcb: (Int) -> Unit) {
@@ -120,19 +122,23 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
         }
         fun draw(canvas:Canvas, paint:Paint) {
             var node:CircleNode? = root
+            canvas.save()
+            canvas.translate(w/2, h/2)
             while(true) {
-                node?.draw(canvas, paint, node.i == curr?.i?:0)
+                node?.draw(canvas, paint, node?.i?:0 == curr?.i?:0)
                 node = node?.neighbor
                 if(node?.i?:0 == 0) {
                     break
                 }
             }
+            canvas.restore()
         }
         fun update(stopcb: () -> Unit, listenerCb: (Int) -> Unit) {
             curr?.update { it ->
                 curr = curr?.neighbor
                 listenerCb(it)
                 if(curr?.i?:0 == 0) {
+                    curr = root
                     stopcb()
                 }
                 else {
@@ -161,7 +167,7 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                     circleLinkedPath = LinkedCirclePath(w, h, view.n)
                 }
                 paint.color = Color.parseColor("#3498db")
-                paint.strokeWidth = Math.min(w,h)/30
+                paint.strokeWidth = Math.min(w,h)/50
                 paint.strokeCap = Paint.Cap.ROUND
             }
             canvas.drawColor(Color.parseColor("#212121"))
@@ -177,7 +183,7 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
         }
         fun handleTap() {
             circleLinkedPath?.startUpdating {
-                animator.stop()
+                animator.start()
             }
         }
     }
