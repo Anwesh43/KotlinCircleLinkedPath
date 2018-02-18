@@ -148,6 +148,7 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
             node?.neighbor = curr
         }
         fun draw(canvas:Canvas, paint:Paint) {
+            paint.color = Color.parseColor("#3498db")
             var node:CircleNode? = root
             canvas.save()
             canvas.translate(w/2, h/2)
@@ -158,6 +159,12 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                     break
                 }
             }
+            paint.style = Paint.Style.FILL
+            paint.color = Color.WHITE
+            paint.textSize = h/15
+            val text = "${curr?.i}"
+            val tw = paint.measureText(text)
+            canvas.drawText(text, -tw/2, 3*h/10 + paint.textSize/2, paint)
             canvas.restore()
         }
         fun update(stopcb: () -> Unit, listenerCb: (Int) -> Unit) {
@@ -194,7 +201,6 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                 if(view.n > 1) {
                     circleLinkedPath = LinkedCirclePath(w, h, view.n)
                 }
-                paint.color = Color.parseColor("#3498db")
                 paint.strokeWidth = Math.min(w,h)/50
                 paint.strokeCap = Paint.Cap.ROUND
             }
