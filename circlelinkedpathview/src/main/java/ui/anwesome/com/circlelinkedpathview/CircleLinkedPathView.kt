@@ -63,9 +63,12 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                 }
             }
         }
+        fun initScales() {
+            scales = arrayOf(0f,0f)
+        }
         fun startUpdating(startcb : () -> Unit) {
             if(dir == 0f) {
-                scales = arrayOf(0f,0f)
+                initScales()
                 dir = 1f
                 startcb()
             }
@@ -78,6 +81,9 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
         val state = State()
         fun addNeighbor(circleNode: CircleNode) {
             neighbor = circleNode
+        }
+        fun initState() {
+            state.initScales()
         }
         fun draw(canvas:Canvas, paint:Paint, curr:Boolean) {
             val scale1 = state.scales[0]
@@ -92,7 +98,28 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                 val updatePoints: (Float) -> PointF = { scale -> PointF(x + (x1 - x)*scale, y +(y1 - y)*scale) }
                 val point1 = updatePoints(scale1)
                 val point2 = updatePoints(scale2)
-                canvas.drawLine(point2.x , point2.y ,point1.x, point1.y, paint)
+               // canvas.drawLine(point2.x , point2.y ,point1.x, point1.y, paint)
+                var neighborIndex = neighbor?.i?:0
+                if(neighborIndex == 0) {
+                    neighborIndex = 6
+                }
+                val updateDeg:(Float) -> Float = { scale -> i * deg + (neighborIndex * deg - i * deg) * scale }
+                val deg1 = updateDeg(scale1)
+                val deg2 = updateDeg(scale2)
+                paint.style = Paint.Style.STROKE
+                val path = Path()
+                for(j in (deg2).toInt()..(deg1).toInt()) {
+                    val px = r * Math.cos(j * Math.PI/180).toFloat()
+                    val py = r * Math.sin(j * Math.PI/180).toFloat()
+                    if(j == deg2.toInt()) {
+                        path.moveTo(px, py)
+                    }
+                    else {
+                        path.lineTo(px, py)
+                    }
+                }
+                canvas.drawPath(path, paint)
+                paint.style = Paint.Style.FILL
                 canvas.drawCircle(x1, y1, (r/10) * scale2, paint)
             }
         }
@@ -139,6 +166,7 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
                 listenerCb(it)
                 if(curr?.i?:0 == 0) {
                     curr = root
+                    curr?.initState()
                     stopcb()
                 }
                 else {
