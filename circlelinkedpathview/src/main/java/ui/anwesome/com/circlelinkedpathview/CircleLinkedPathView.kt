@@ -44,4 +44,24 @@ class CircleLinkedPathView(ctx:Context):View(ctx) {
             }
         }
     }
+    data class State(var prevScale : Float = 0f,var j : Int = 0, var jDir : Int = 1, var dir : Float = 0f) {
+        var scales : Array<Float> = arrayOf(0f, 0f)
+        fun update(stopcb : (Float) -> Unit) {
+            scales[j] += dir * 0.1f
+            if(Math.abs(scales[j] - prevScale) > 1) {
+                scales[j] = prevScale + dir
+                if(j == scales.size) {
+                    j = 0
+                    dir = 0f
+                }
+            }
+        }
+        fun startUpdating(startcb : () -> Unit) {
+            if(dir == 0f) {
+                scales = arrayOf(0f,0f)
+                dir = 1f
+                startcb()
+            }
+        }
+    }
 }
