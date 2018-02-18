@@ -3,6 +3,7 @@ package ui.anwesome.com.circlelinkedpathview
 /**
  * Created by anweshmishra on 18/02/18.
  */
+import android.app.Activity
 import android.content.*
 import android.view.*
 import android.graphics.*
@@ -177,6 +178,13 @@ class CircleLinkedPathView(ctx:Context, var n:Int = 6):View(ctx) {
             circleLinkedPath?.startUpdating {
                 animator.stop()
             }
+        }
+    }
+    companion object {
+        fun create(activity: Activity):CircleLinkedPathView {
+            val view = CircleLinkedPathView(activity)
+            activity.setContentView(view)
+            return view
         }
     }
 }
